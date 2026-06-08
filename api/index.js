@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/school_dashboard';
+const MONGODB_URI = 'mongodb+srv://students_data:Alexzzy_11@cluster0.dcfjjzb.mongodb.net/school_dashboard?appName=Cluster0';
 let cached = global.mongoose;
 if (!cached) cached = global.mongoose = { conn: null, promise: null };
 
@@ -292,6 +292,7 @@ app.put('/api/notifications/read-all', async (req, res) => {
 });
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'School Dashboard API is running' }));
+app.get('/api/debug', (req, res) => res.json({ uri: MONGODB_URI.replace(/Alexzzy_.*@/, '***@'), host: MONGODB_URI.split('@')[1] || 'none' }));
 app.get('/api', (req, res) => res.json({ status: 'ok', message: 'School Dashboard API' }));
 
 export default app;
