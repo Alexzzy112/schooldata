@@ -1,3 +1,5 @@
-export default function handler(req, res) {
-  res.status(200).json({ status: 'ok', url: req.url, method: req.method });
-}
+import express from 'express';
+const app = express();
+app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'API running' }));
+app.get('/api', (req, res) => res.json({ status: 'ok', message: 'School API' }));
+export default app;
