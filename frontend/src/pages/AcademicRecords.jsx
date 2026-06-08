@@ -46,7 +46,9 @@ export default function AcademicRecords() {
         const current = sessionRes.data.sessions?.find((s) => s.isCurrent);
         setFilters((f) => ({ ...f, session: current?._id || '' }));
         setForm((f) => ({ ...f, session: current?._id || '' }));
-      } catch {}
+      } catch {} finally {
+        setLoading(false);
+      }
     };
     init();
   }, []);

@@ -38,7 +38,9 @@ export default function Students() {
         if (currentSession) {
           setForm((f) => ({ ...f, session: currentSession._id }));
         }
-      } catch {}
+      } catch {} finally {
+        setLoading(false);
+      }
     };
     init();
   }, []);
