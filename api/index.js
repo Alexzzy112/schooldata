@@ -1,12 +1,23 @@
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5000', process.env.FRONTEND_URL].filter(Boolean),
+  credentials: true,
+}));
 app.use(express.json());
 
-const MONGODB_URI = 'mongodb+srv://students_data:Alexzzy_11@cluster0.dcfjjzb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://students_data:Alexzzy_11@cluster0.dcfjjzb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET environment variable is not set!');
+  process.exit(1);
+}
+
 let cached = global.mongoose;
 if (!cached) cached = global.mongoose = { conn: null, promise: null };
 
@@ -21,6 +32,30 @@ async function getModel(name) {
   return (await import(`../backend/models/${name}.js`)).default;
 }
 
+// JWT Middleware
+const protect = async (req, res, next) => {
+  try {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: 'Not authorized, no token' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const User = await getModel('User');
+    req.user = await User.findById(decoded.id).select('-password');
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Not authorized, token failed', error: error.message });
+  }
+};
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     await connectDB();
@@ -28,10 +63,16 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) return res.status(401).json({ message: 'Invalid email or password' });
-    const jwt = (await import('jsonwebtoken')).default;
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback', { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: user.toJSON() });
   } catch (e) { res.status(500).json({ message: 'Login failed', error: e.message }); }
+});
+
+app.get('/api/auth/me', protect, async (req, res) => {
+  try {
+    const user = req.user;
+    res.json({ user });
+  } catch (e) { res.status(500).json({ message: 'Error', error: e.message }); }
 });
 
 app.get('/api/auth/seed', async (req, res) => {

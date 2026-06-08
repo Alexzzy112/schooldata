@@ -5,9 +5,22 @@ import { connectDB } from './config/db.js';
 
 dotenv.config();
 
+// Validate required environment variables
+if (!process.env.JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET environment variable is not set!');
+  process.exit(1);
+}
+
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
