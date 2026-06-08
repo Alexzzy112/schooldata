@@ -2,7 +2,6 @@
   "name": "school-dashboard",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
