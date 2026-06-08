@@ -3,6 +3,9 @@ import { body } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import { protect } from '../middleware/auth.js';
 import User from '../models/User.js';
+import Class from '../models/Class.js';
+import Subject from '../models/Subject.js';
+import Session from '../models/Session.js';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
@@ -62,6 +65,30 @@ router.post(
 
 router.get('/me', protect, async (req, res) => {
   res.json({ user: req.user });
+});
+
+router.post('/seed', async (req, res) => {
+  try {
+    const existing = await User.countDocuments();
+    if (existing > 0) {
+      return res.json({ message: 'Database already has data', seeded: false });
+    }
+
+    await User.create({ username: 'admin', email: 'admin@school.com', password: 'admin123', role: 'admin' });
+    await User.create({ username: 'teacher', email: 'teacher@school.com', password: 'teacher123', role: 'teacher' });
+    await User.create({ username: 'principal', email: 'principal@school.com', password: 'principal123', role: 'viewer' });
+
+    const subjectsList = ['Mathematics', 'English', 'Biology', 'Chemistry', 'Physics', 'Computer Science', 'History', 'Geography', 'Economics', 'Literature'];
+    const classList = ['SS1', 'SS2', 'SS3', 'JSS1', 'JSS2', 'JSS3'];
+
+    await Class.insertMany(classList.map((name) => ({ name, code: name })));
+    await Subject.insertMany(subjectsList.map((name) => ({ name, code: name.substring(0, 3).toUpperCase() })));
+    await Session.create({ name: '2024/2025', startYear: 2024, endYear: 2025, isActive: true, isCurrent: true });
+
+    res.json({ message: 'Database seeded successfully', seeded: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Seed failed', error: error.message });
+  }
 });
 
 export default router;
