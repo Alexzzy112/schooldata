@@ -6,13 +6,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGODB_URI = 'mongodb+srv://students_data:Alexzzy_11@cluster0.dcfjjzb.mongodb.net/school_dashboard?appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://students_data:Alexzzy_11@cluster0.dcfjjzb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 let cached = global.mongoose;
 if (!cached) cached = global.mongoose = { conn: null, promise: null };
 
 async function connectDB() {
   if (cached.conn) return cached.conn;
-  if (!cached.promise) cached.promise = mongoose.connect(MONGODB_URI).then(m => m);
+  if (!cached.promise) cached.promise = mongoose.connect(MONGODB_URI, { dbName: 'school_dashboard' }).then(m => m);
   cached.conn = await cached.promise;
   return cached.conn;
 }
